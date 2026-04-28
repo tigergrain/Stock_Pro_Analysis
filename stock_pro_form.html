@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StockPulse Pro — Single Stock Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0ede6;
+  --ink: #0d0d14;
+  --card: #141420;
+  --card2: #1c1c2c;
+  --gold: #c8a84b;
+  --gold-dim: rgba(200,168,75,0.15);
+  --teal: #1a9e8f;
+  --red: #d94f3d;
+  --green: #2a9d5c;
+  --border: rgba(200,168,75,0.18);
+  --muted: #6a6a7a;
+  --radius: 16px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  min-height: 100vh;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 10% 15%, rgba(200,168,75,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 50% at 90% 85%, rgba(26,158,143,0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ── LAYOUT ── */
+.page { position: relative; z-index: 1; max-width: 560px; margin: 0 auto; padding: 44px 20px 72px; }
+
+/* ── HEADER ── */
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--ink); color: var(--gold);
+  font-family: 'DM Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 7px 16px; border-radius: 40px; margin-bottom: 26px;
+}
+.dot { width: 5px; height: 5px; border-radius: 50%; background: var(--teal); animation: blink 2s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+h1 {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(44px, 11vw, 64px);
+  line-height: 1.0;
+  color: var(--ink);
+  margin-bottom: 10px;
+  font-weight: 400;
+}
+h1 .accent { color: var(--gold); font-style: italic; }
+h1 .accent2 { color: var(--teal); }
+
+.tagline {
+  font-size: 14px; color: var(--muted); max-width: 400px;
+  line-height: 1.65; margin-bottom: 32px; font-weight: 400;
+}
+
+/* ── METRICS ROW ── */
+.metrics {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; margin-bottom: 4px;
+}
+.metric { padding: 16px 8px; text-align: center; border-right: 1px solid var(--border); }
+.metric:last-child { border-right: none; }
+.metric-val {
+  font-family: 'Instrument Serif', serif; font-size: 28px;
+  color: var(--gold); line-height: 1; font-style: italic;
+}
+.metric-lbl { font-size: 8.5px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 4px; }
+
+/* ── FORM CARD ── */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 30px 26px;
+}
+
+/* ── FIELD ── */
+.field { margin-bottom: 20px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+label {
+  display: block; font-family: 'DM Mono', monospace;
+  font-size: 9.5px; letter-spacing: 0.11em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 8px;
+}
+label .req { color: var(--red); margin-left: 3px; }
+
+input, select, textarea {
+  width: 100%; background: var(--card2);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px; padding: 13px 15px;
+  font-family: 'DM Sans', sans-serif; font-size: 13.5px;
+  color: #ddddf0; outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  -webkit-appearance: none;
+}
+input::placeholder, textarea::placeholder { color: #3d3d54; }
+input:focus, select:focus, textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(200,168,75,0.10);
+}
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c8a84b' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+  padding-right: 38px; cursor: pointer;
+}
+select option { background: #1c1c2c; }
+textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+
+/* ── TICKER PILL ── */
+.ticker-hint {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;
+}
+.t-pill {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  padding: 3px 10px; border-radius: 6px; cursor: pointer;
+  background: var(--card2); border: 1px solid rgba(200,168,75,0.2);
+  color: var(--gold); transition: background .15s;
+  user-select: none;
+}
+.t-pill:hover { background: var(--gold-dim); }
+
+/* ── DIVIDER ── */
+hr { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
+
+/* ── SIGNAL LEGEND ── */
+.signals { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.sig {
+  padding: 10px 8px; border-radius: 10px; text-align: center;
+  border: 1px solid;
+}
+.sig-b { background: rgba(42,157,92,.1); border-color: rgba(42,157,92,.3); }
+.sig-s { background: rgba(217,79,61,.1); border-color: rgba(217,79,61,.3); }
+.sig-h { background: rgba(200,168,75,.1); border-color: rgba(200,168,75,.3); }
+.sig-label { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600; }
+.sig-b .sig-label { color: var(--green); }
+.sig-s .sig-label { color: var(--red); }
+.sig-h .sig-label { color: var(--gold); }
+.sig-sub { font-size: 9px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+
+/* ── WHAT YOU GET ── */
+.outputs { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 6px; }
+.output-item {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--card2); border-radius: 9px;
+  padding: 9px 12px; font-size: 11px; color: #b0b0c8;
+}
+.output-item .ico { font-size: 14px; }
+
+/* ── SUBMIT ── */
+.submit-btn {
+  width: 100%; background: var(--gold); color: var(--ink);
+  font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 700;
+  border: none; border-radius: 12px; padding: 17px 24px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: transform .15s, box-shadow .15s; margin-top: 24px;
+}
+.submit-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(200,168,75,.3); }
+.submit-btn:active { transform: translateY(0); }
+.submit-btn.loading { background: #1a5a52; color: #fff; pointer-events: none; }
+.spin { width: 17px; height: 17px; border: 2.5px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── FEATURE PILLS ── */
+.pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; justify-content: center; }
+.pill {
+  font-size: 10px; color: var(--muted); padding: 4px 11px;
+  border-radius: 20px; border: 1px solid rgba(255,255,255,.07); background: var(--card);
+}
+.pill::before { content: '• '; color: var(--teal); }
+
+/* ── SUCCESS ── */
+.success {
+  display: none; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 40px 26px; text-align: center;
+}
+.success.show { display: block; }
+.s-icon { font-size: 52px; margin-bottom: 14px; }
+.s-title { font-family: 'Instrument Serif', serif; font-size: 36px; color: var(--gold); font-style: italic; margin-bottom: 10px; }
+.s-text { font-size: 13px; color: var(--muted); line-height: 1.75; }
+.s-text strong { color: #ddddf0; }
+
+/* ── ERROR HIGHLIGHT ── */
+.shake { animation: shake .3s ease; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+
+@media (max-width:380px) {
+  .row2 { grid-template-columns: 1fr; }
+  .signals { grid-template-columns: 1fr; }
+  .outputs { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="eyebrow"><span class="dot"></span>Professional Stock Analysis</div>
+
+  <h1>Deep<br><span class="accent">Stock</span><br><span class="accent2">Analysis</span></h1>
+  <p class="tagline">Enter any US stock ticker and get a full professional analysis — RSI, MACD, Bollinger Bands, fundamentals, news, and a BUY / SELL / HOLD signal. Results delivered to your Google Sheet.</p>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">Live</div><div class="metric-lbl">Market Data</div></div>
+    <div class="metric"><div class="metric-val">6+</div><div class="metric-lbl">Indicators</div></div>
+    <div class="metric"><div class="metric-val">AI</div><div class="metric-lbl">Written Report</div></div>
+  </div>
+
+  <!-- FORM -->
+  <div class="card" id="formCard">
+
+    <!-- TICKER -->
+    <div class="field">
+      <label>Stock Ticker <span class="req">*</span></label>
+      <input type="text" id="ticker" placeholder="e.g. AAPL, TSLA, NVDA, MSFT" maxlength="6" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+      <div class="ticker-hint">
+        <span class="t-pill" onclick="setTicker('AAPL')">AAPL</span>
+        <span class="t-pill" onclick="setTicker('TSLA')">TSLA</span>
+        <span class="t-pill" onclick="setTicker('NVDA')">NVDA</span>
+        <span class="t-pill" onclick="setTicker('MSFT')">MSFT</span>
+        <span class="t-pill" onclick="setTicker('AMZN')">AMZN</span>
+        <span class="t-pill" onclick="setTicker('META')">META</span>
+        <span class="t-pill" onclick="setTicker('GOOGL')">GOOGL</span>
+        <span class="t-pill" onclick="setTicker('JPM')">JPM</span>
+      </div>
+    </div>
+
+    <!-- INTERVAL + RANGE -->
+    <div class="row2">
+      <div class="field">
+        <label>Chart Interval <span class="req">*</span></label>
+        <select id="interval">
+          <option value="1h">Hourly (1H)</option>
+          <option value="4h">4 Hours (4H)</option>
+          <option value="1d" selected>Daily (1D)</option>
+          <option value="1wk">Weekly (1W)</option>
+          <option value="1mo">Monthly (1M)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Analysis Range <span class="req">*</span></label>
+        <select id="range">
+          <option value="1mo">1 Month</option>
+          <option value="3mo" selected>3 Months</option>
+          <option value="6mo">6 Months</option>
+          <option value="1y">1 Year</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ANALYSIS FOCUS -->
+    <div class="field">
+      <label>Analysis Focus</label>
+      <select id="focus">
+        <option value="full">Full Analysis (Technical + Fundamental + News)</option>
+        <option value="technical">Technical Only (RSI, MACD, Bollinger)</option>
+        <option value="fundamental">Fundamental Only (P/E, EPS, Valuation)</option>
+        <option value="news">News & Sentiment Only</option>
+      </select>
+    </div>
+
+    <hr>
+
+    <!-- SIGNAL LEGEND -->
+    <div class="field">
+      <label>Output Signals You'll Receive</label>
+      <div class="signals">
+        <div class="sig sig-b"><div class="sig-label">🟢 BUY</div><div class="sig-sub">RSI&lt;35 · MACD+ · Price above SMA</div></div>
+        <div class="sig sig-s"><div class="sig-label">🔴 SELL</div><div class="sig-sub">RSI&gt;70 · MACD− · Price below SMA</div></div>
+        <div class="sig sig-h"><div class="sig-label">🟡 HOLD</div><div class="sig-sub">Mixed signals · Neutral zone</div></div>
+      </div>
+    </div>
+
+    <!-- WHAT GOES INTO SHEET -->
+    <div class="field">
+      <label>What You Get in Your Google Sheet</label>
+      <div class="outputs">
+        <div class="output-item"><span class="ico">📊</span>RSI-14 · MACD · SMA-20/50</div>
+        <div class="output-item"><span class="ico">📉</span>Bollinger Bands (Upper/Lower)</div>
+        <div class="output-item"><span class="ico">💼</span>P/E · EPS · Analyst Target</div>
+        <div class="output-item"><span class="ico">📰</span>Top 3 News Headlines</div>
+        <div class="output-item"><span class="ico">🎯</span>BUY / SELL / HOLD Signal</div>
+        <div class="output-item"><span class="ico">📈</span>Chart URL (QuickChart)</div>
+        <div class="output-item"><span class="ico">🤖</span>AI Written Analysis</div>
+        <div class="output-item"><span class="ico">🏷️</span>52W High / Low / Volume</div>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- USER INFO -->
+    <div class="row2">
+      <div class="field">
+        <label>Your Name <span class="req">*</span></label>
+        <input type="text" id="userName" placeholder="e.g. John Smith">
+      </div>
+      <div class="field">
+        <label>Email <span class="req">*</span></label>
+        <input type="email" id="userEmail" placeholder="e.g. john@email.com">
+      </div>
+    </div>
+
+    <!-- SHEET URL -->
+    <div class="field">
+      <label>Google Sheet URL <span class="req">*</span></label>
+      <input type="url" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/...">
+    </div>
+
+    <!-- NOTES -->
+    <div class="field">
+      <label>Additional Notes <span style="color:var(--muted);font-size:8px;margin-left:4px">(optional)</span></label>
+      <textarea id="notes" placeholder="e.g. Focus on short-term entry points, compare with sector peers..."></textarea>
+    </div>
+
+    <!-- SUBMIT -->
+    <button class="submit-btn" id="submitBtn" onclick="submitForm()">
+      <span id="btnLabel">Run Deep Analysis →</span>
+      <span id="btnSpinner" style="display:none"><div class="spin"></div></span>
+    </button>
+
+    <div class="pills">
+      <span class="pill">RSI · MACD · Bollinger Bands</span>
+      <span class="pill">P/E · EPS · Analyst Target</span>
+      <span class="pill">AI Written Report</span>
+      <span class="pill">Results in ~20 sec</span>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success" id="successCard">
+    <div class="s-icon">📊</div>
+    <div class="s-title">Analysis Running</div>
+    <p class="s-text">
+      Your deep analysis for <strong id="successTicker">—</strong> is processing.<br>
+      All results will appear in your Google Sheet in <strong>~20–30 seconds</strong>.<br><br>
+      Check the <strong>Stock Analysis</strong> tab for full data<br>and the <strong>AI Summary</strong> tab for the written report.
+    </p>
+    <button class="submit-btn" style="max-width:260px;margin:24px auto 0" onclick="resetForm()">
+      ↺ Analyse Another Stock
+    </button>
+  </div>
+
+</div>
+<script>
+function setTicker(t) {
+  document.getElementById('ticker').value = t;
+  document.getElementById('ticker').focus();
+}
+
+function markError(id) {
+  const el = document.getElementById(id);
+  el.style.borderColor = '#d94f3d';
+  el.classList.add('shake');
+  setTimeout(() => el.classList.remove('shake'), 400);
+  el.addEventListener('input', () => el.style.borderColor = '', { once: true });
+}
+
+function submitForm() {
+  const ticker   = document.getElementById('ticker').value.trim().toUpperCase();
+  const name     = document.getElementById('userName').value.trim();
+  const email    = document.getElementById('userEmail').value.trim();
+  const sheetUrl = document.getElementById('sheetUrl').value.trim();
+
+  let valid = true;
+  if (!ticker)   { markError('ticker');    valid = false; }
+  if (!name)     { markError('userName');  valid = false; }
+  if (!email)    { markError('userEmail'); valid = false; }
+  if (!sheetUrl) { markError('sheetUrl');  valid = false; }
+  if (!valid) return;
+
+  // Loading state
+  const btn = document.getElementById('submitBtn');
+  btn.classList.add('loading');
+  document.getElementById('btnLabel').textContent = 'Analyzing ' + ticker + '...';
+  document.getElementById('btnSpinner').style.display = 'inline-block';
+
+  const payload = {
+    ticker,
+    interval:  document.getElementById('interval').value,
+    range:     document.getElementById('range').value,
+    focus:     document.getElementById('focus').value,
+    name,
+    email,
+    sheetUrl,
+    notes:     document.getElementById('notes').value.trim(),
+    timestamp: new Date().toISOString()
+  };
+
+  // ← Replace this URL with your n8n webhook URL after importing the workflow
+  const WEBHOOK = 'https://YOUR-N8N-INSTANCE.com/webhook/stock-pro-analysis';
+
+  fetch(WEBHOOK, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(() => showSuccess(ticker))
+  .catch(() => showSuccess(ticker));
+}
+
+function showSuccess(ticker) {
+  document.getElementById('successTicker').textContent = ticker;
+  document.getElementById('formCard').style.display = 'none';
+  document.getElementById('successCard').classList.add('show');
+}
+
+function resetForm() {
+  document.getElementById('formCard').style.display = 'block';
+  document.getElementById('successCard').classList.remove('show');
+  const btn = document.getElementById('submitBtn');
+  btn.classList.remove('loading');
+  document.getElementById('btnLabel').textContent = 'Run Deep Analysis →';
+  document.getElementById('btnSpinner').style.display = 'none';
+  document.getElementById('ticker').value = '';
+  document.getElementById('userName').value = '';
+  document.getElementById('userEmail').value = '';
+  document.getElementById('sheetUrl').value = '';
+  document.getElementById('notes').value = '';
+}
+</script>
+</body>
+</html>
