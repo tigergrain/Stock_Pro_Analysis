@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StockGPT — AI Filing Statement Analyzer</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #EDEAE3;
+      padding: 2.5rem 1.5rem 3rem;
+      font-family: system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+    }
+
+    .badge {
+      display: flex; align-items: center; gap: 7px;
+      background: #1C2333; border-radius: 999px;
+      padding: 8px 20px; width: fit-content; margin: 0 auto 1.75rem;
+    }
+    .badge-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ECDC4; }
+    .badge-text { font-size: 11px; font-weight: 500; color: #8AAACF; letter-spacing: 0.12em; text-transform: uppercase; }
+
+    .hero { text-align: center; margin-bottom: 2rem; }
+    .hero-line1 { font-size: 44px; font-weight: 800; color: #1C2333; line-height: 1.05; font-family: Georgia, serif; }
+    .hero-line2 { font-size: 44px; font-weight: 800; line-height: 1.15; font-family: Georgia, serif; }
+
+    .gold-gradient-text {
+      background: linear-gradient(90deg,
+        #8A7230 0%, #B09050 20%, #C9A84C 35%, #F0D878 50%, #C9A84C 65%, #B09050 80%, #8A7230 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      animation: goldShimmer 3s linear infinite;
+    }
+    @keyframes goldShimmer {
+      0%   { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+
+    .hero-sub { font-size: 14px; color: #5A5A4A; margin-top: 1rem; line-height: 1.7; }
+    .hero-sub span { color: #2C6FD4; }
+
+    .card {
+      background: linear-gradient(180deg, #1A2235 0%, #0F172A 50%);
+      border-radius: 18px; max-width: 680px; margin: 0 auto; overflow: hidden;
+      border-top: 3px solid transparent;
+      border-image: linear-gradient(90deg, #C9A84C, #4ECDC4, #C9A84C) 1;
+    }
+
+    .stats-row {
+      display: grid; grid-template-columns: 1fr 1px 1fr 1px 1fr;
+      align-items: center; padding: 1.75rem 2rem; border-bottom: 1px solid #1E2D45;
+    }
+    .stat-divider { background: #2A3550; height: 40px; }
+    .stat { text-align: center; }
+    .stat-val { font-size: 30px; font-weight: 700; font-family: Georgia, serif; color: #C9A84C; }
+    .stat-lbl { font-size: 10px; color: #6A7E9A; letter-spacing: 0.14em; text-transform: uppercase; margin-top: 4px; font-weight: 500; }
+
+    .form-body { padding: 1.75rem 2rem 2rem; }
+
+    .field-label {
+      font-size: 11px; font-weight: 600; color: #C9A84C;
+      letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .req { color: #E07070; }
+    .field-full { margin-bottom: 18px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+
+    .input-wrap { position: relative; }
+    .input-wrap i {
+      position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+      font-size: 15px; color: #3A5070; pointer-events: none;
+    }
+    .form-input {
+      width: 100%; background: #1A2438; border: 1px solid #263347;
+      border-radius: 10px; padding: 12px 14px 12px 38px;
+      font-size: 14px; color: #C8D8EC; outline: none; font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    .form-input:focus { border-color: #C9A84C; }
+    .form-input::placeholder { color: #2E4060; }
+
+    .custom-select {
+      width: 100%; background: #1A2438; border: 1px solid #263347;
+      border-radius: 10px; padding: 12px 38px 12px 14px;
+      font-size: 14px; color: #C8D8EC; outline: none; font-family: inherit;
+      appearance: none; cursor: pointer; transition: border-color 0.15s;
+    }
+    .custom-select:focus { border-color: #C9A84C; }
+    .select-wrap { position: relative; }
+    .select-wrap i {
+      position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
+      font-size: 15px; color: #3A5070; pointer-events: none;
+    }
+
+    .divider-line { height: 1px; background: #1E2D45; margin: 1.5rem 0; }
+    .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 60px; }
+    .report-cb { display: none; }
+
+    @keyframes navyFlow {
+      0%   { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
+    }
+    @keyframes goldFlow {
+      0%   { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
+    }
+
+    .report-lbl {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 10px; padding: 22px 12px;
+      background: linear-gradient(105deg, #1A2438, #243555, #1E3060, #16202F, #2A3F60, #1A2438, #243555, #1E3060, #16202F);
+      background-size: 400% 100%;
+      animation: navyFlow 14s linear infinite;
+      border: 1px solid #2A3A52;
+      border-radius: 12px; cursor: pointer;
+      transition: border-color 0.4s;
+      text-align: center;
+    }
+
+    .report-lbl:hover,
+    .report-cb:checked + .report-lbl {
+      background: linear-gradient(105deg, #9A7010, #C9A84C, #F0D878, #E8C84A, #C9A030, #B8890E, #F0D060, #C9A84C, #9A7010);
+      background-size: 400% 100%;
+      animation: goldFlow 10s linear infinite;
+      border-color: #C9A84C;
+    }
+
+    .report-lbl:hover .report-name,
+    .report-cb:checked + .report-lbl .report-name {
+      color: #1A0E00 !important;
+      -webkit-text-fill-color: #1A0E00 !important;
+      text-shadow: none !important;
+    }
+    .report-lbl:hover .report-desc,
+    .report-cb:checked + .report-lbl .report-desc {
+      color: #2A1800 !important;
+      -webkit-text-fill-color: #2A1800 !important;
+    }
+
+    .report-emoji { font-size: 32px; line-height: 1; }
+
+    .report-name {
+      font-size: 14px !important;
+      font-weight: 900 !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+      background: none !important;
+      -webkit-background-clip: unset !important;
+      background-clip: unset !important;
+    }
+
+    .report-desc {
+      font-size: 11px !important;
+      font-weight: 700 !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+      background: none !important;
+      -webkit-background-clip: unset !important;
+      background-clip: unset !important;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    }
+
+    .submit-btn {
+      width: 100%; padding: 16px;
+      background: #2C7BE5;
+      border: none;
+      border-radius: 12px;
+      font-size: 18px; font-weight: 700; color: #ffffff;
+      cursor: pointer; font-family: Georgia, serif;
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+      letter-spacing: 0.01em;
+      box-shadow: 0 2px 16px rgba(44,123,229,0.35);
+    }
+    .submit-btn:hover {
+      background: #1A6BD4;
+      box-shadow: 0 4px 24px rgba(44,123,229,0.5);
+    }
+    .submit-btn:active { transform: scale(0.99); }
+
+    .status { display: none; margin-top: 1rem; padding: 11px 14px; border-radius: 8px; font-size: 13px; text-align: center; }
+    .status.success { background: #0D2318; border: 1px solid #1A4A2E; color: #5CCE8A; }
+    .status.error { background: #1F0D0D; border: 1px solid #4A1E1E; color: #E07070; }
+
+    .footer-pills {
+      display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 16px;
+      padding: 1.1rem 1.5rem 1.3rem; border-top: 1px solid #1E2D45;
+    }
+    .pill { font-size: 12px; color: #C9A88A; display: flex; align-items: center; gap: 6px; }
+    .pill::before { content: "•"; color: #C9A84C; font-size: 14px; }
+
+    @media (max-width: 480px) {
+      .hero-line1, .hero-line2 { font-size: 32px; }
+      .field-row { grid-template-columns: 1fr; }
+      .report-grid { grid-template-columns: 1fr; }
+      .form-body { padding: 1.25rem 1.25rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="badge">
+    <div class="badge-dot"></div>
+    <span class="badge-text">StockGPT — AI Filing Statement Analyzer</span>
+  </div>
+
+  <div class="hero">
+    <div class="hero-line1">Analyze Any</div>
+    <div class="hero-line2"><span class="gold-gradient-text">Filing Statements</span></div>
+    <p class="hero-sub">
+      Enter a company name, choose your filing type and timeframe.<br>
+      <span>Income · Balance Sheet · Cash Flow · AI Report</span> — delivered instantly.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val">Cross</div><div class="stat-lbl">Statements</div></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><div class="stat-val">AI</div><div class="stat-lbl">Analysis</div></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><div class="stat-val">SEC</div><div class="stat-lbl">Data</div></div>
+    </div>
+
+    <div class="form-body">
+      <div class="field-row">
+        <div>
+          <div class="field-label">Company Name <span class="req">*</span></div>
+          <div class="input-wrap">
+            <i class="ti ti-building-bank"></i>
+            <input class="form-input" id="company" type="text" placeholder="e.g. Apple Inc." autocomplete="off" />
+          </div>
+        </div>
+        <div>
+          <div class="field-label">Filing Type <span class="req">*</span></div>
+          <div class="select-wrap">
+            <select class="custom-select" id="filing-type" onchange="updateTimeframe()">
+              <option value="10-K">10-K — Annual report</option>
+              <option value="10-Q">10-Q — Quarterly report</option>
+            </select>
+            <i class="ti ti-chevron-down"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="field-full">
+        <div class="field-label">Timeframe <span class="req">*</span></div>
+        <div class="select-wrap">
+          <select class="custom-select" id="timeframe"></select>
+          <i class="ti ti-chevron-down"></i>
+        </div>
+      </div>
+
+      <div class="divider-line"></div>
+      <div class="field-label" style="margin-bottom:12px">Select Statements <span class="req">*</span></div>
+
+      <div class="report-grid">
+        <input class="report-cb" type="checkbox" id="r-income" value="income_statement" checked />
+        <label class="report-lbl" for="r-income">
+          <div class="report-emoji">📈</div>
+          <span class="report-name">Income Statement</span>
+          <span class="report-desc">Revenue · Profit · Margins</span>
+        </label>
+
+        <input class="report-cb" type="checkbox" id="r-balance" value="balance_sheet" checked />
+        <label class="report-lbl" for="r-balance">
+          <div class="report-emoji">⚖️</div>
+          <span class="report-name">Balance Sheet</span>
+          <span class="report-desc">Assets · Liabilities · Equity</span>
+        </label>
+
+        <input class="report-cb" type="checkbox" id="r-cashflow" value="cash_flow" checked />
+        <label class="report-lbl" for="r-cashflow">
+          <div class="report-emoji">💵</div>
+          <span class="report-name">Cash Flow</span>
+          <span class="report-desc">Operating · Investing · Financing</span>
+        </label>
+
+        <input class="report-cb" type="checkbox" id="r-ai" value="ai_report" checked />
+        <label class="report-lbl" for="r-ai">
+          <div class="report-emoji">🤖</div>
+          <span class="report-name">AI Report</span>
+          <span class="report-desc">Cross-statement AI analysis</span>
+        </label>
+      </div>
+
+      <button class="submit-btn" onclick="handleSubmit()">
+        Analyze Filing Statements &nbsp;→
+      </button>
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="footer-pills">
+      <span class="pill">SEC EDGAR live data</span>
+      <span class="pill">XBRL parsed</span>
+      <span class="pill">Cross-statement AI</span>
+      <span class="pill">Up to 7 years / 28 quarters</span>
+      <span class="pill">Pro members only</span>
+    </div>
+  </div>
+
+  <script>
+    function updateTimeframe() {
+      const type = document.getElementById('filing-type').value;
+      const sel = document.getElementById('timeframe');
+      sel.innerHTML = '';
+      if (type === '10-K') {
+        ['Past 1 Year','Past 2 Years','Past 3 Years','Past 4 Years','Past 5 Years','Past 6 Years','Past 7 Years'].forEach((l, i) => {
+          const o = document.createElement('option');
+          o.value = (i+1)+'Y'; o.textContent = l; sel.appendChild(o);
+        });
+        sel.value = '3Y';
+      } else {
+        for (let q = 1; q <= 28; q++) {
+          const o = document.createElement('option');
+          o.value = q+'Q'; o.textContent = 'Past ' + q + ' Quarter' + (q > 1 ? 's' : '');
+          sel.appendChild(o);
+        }
+        sel.value = '4Q';
+      }
+    }
+    updateTimeframe();
+
+    function handleSubmit() {
+      const company = document.getElementById('company').value.trim();
+      const filing = document.getElementById('filing-type').value;
+      const timeframe = document.getElementById('timeframe').value;
+      const reports = ['r-income','r-balance','r-cashflow','r-ai']
+        .filter(id => document.getElementById(id).checked)
+        .map(id => document.getElementById(id).value);
+
+      if (!company) { showStatus('Please enter a company name.', 'error'); return; }
+      if (reports.length === 0) { showStatus('Please select at least one statement.', 'error'); return; }
+
+      showStatus('Fetching ' + filing + ' for ' + company + ' (' + timeframe + ')… please wait.', 'success');
+
+      const webhookUrl = 'YOUR_WEBHOOK_URL_HERE';
+      fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company, filing_type: filing, timeframe, reports })
+      })
+      .then(r => {
+        if (r.ok) showStatus('Analysis started for ' + company + '. Results incoming!', 'success');
+        else showStatus('Something went wrong. Please try again.', 'error');
+      })
+      .catch(() => showStatus('Could not reach the server. Please try again.', 'error'));
+    }
+
+    function showStatus(msg, type) {
+      const el = document.getElementById('status');
+      el.textContent = msg; el.className = 'status ' + type; el.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
