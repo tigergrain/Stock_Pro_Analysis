@@ -97,7 +97,7 @@
     }
 
     .divider-line { height: 1px; background: #1E2D45; margin: 1.5rem 0; }
-    .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 60px; }
+    .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 30px; }
     .report-cb { display: none; }
 
     @keyframes navyFlow {
@@ -301,7 +301,7 @@
       <span class="pill">SEC EDGAR live data</span>
       <span class="pill">XBRL parsed</span>
       <span class="pill">Cross-statement AI</span>
-      <span class="pill">Up to 7 years / 28 quarters</span>
+      <span class="pill">Up to 5 years / 20 quarters</span>
       <span class="pill">Pro members only</span>
     </div>
   </div>
@@ -312,13 +312,13 @@
       const sel = document.getElementById('timeframe');
       sel.innerHTML = '';
       if (type === '10-K') {
-        ['Past 1 Year','Past 2 Years','Past 3 Years','Past 4 Years','Past 5 Years','Past 6 Years','Past 7 Years'].forEach((l, i) => {
+        ['Past 1 Year','Past 2 Years','Past 3 Years','Past 4 Years','Past 5 Years'].forEach((l, i) => {
           const o = document.createElement('option');
           o.value = (i+1)+'Y'; o.textContent = l; sel.appendChild(o);
         });
         sel.value = '3Y';
       } else {
-        for (let q = 1; q <= 28; q++) {
+        for (let q = 1; q <= 20; q++) {
           const o = document.createElement('option');
           o.value = q+'Q'; o.textContent = 'Past ' + q + ' Quarter' + (q > 1 ? 's' : '');
           sel.appendChild(o);
