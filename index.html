@@ -98,7 +98,6 @@
 
     .divider-line { height: 1px; background: #1E2D45; margin: 1.5rem 0; }
     .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 30px; }
-    .report-cb { display: none; }
 
     @keyframes navyFlow {
       0%   { background-position: 0% 50%; }
@@ -109,7 +108,7 @@
       100% { background-position: 300% 50%; }
     }
 
-    .report-lbl {
+    .report-btn {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 10px; padding: 22px 12px;
       background: linear-gradient(105deg, #1A2438, #243555, #1E3060, #16202F, #2A3F60, #1A2438, #243555, #1E3060, #16202F);
@@ -119,24 +118,22 @@
       border-radius: 12px; cursor: pointer;
       transition: border-color 0.4s;
       text-align: center;
+      user-select: none;
     }
 
-    .report-lbl:hover,
-    .report-cb:checked + .report-lbl {
+    .report-btn.selected {
       background: linear-gradient(105deg, #9A7010, #C9A84C, #F0D878, #E8C84A, #C9A030, #B8890E, #F0D060, #C9A84C, #9A7010);
       background-size: 400% 100%;
       animation: goldFlow 10s linear infinite;
       border-color: #C9A84C;
     }
 
-    .report-lbl:hover .report-name,
-    .report-cb:checked + .report-lbl .report-name {
+    .report-btn.selected .report-name {
       color: #1A0E00 !important;
       -webkit-text-fill-color: #1A0E00 !important;
       text-shadow: none !important;
     }
-    .report-lbl:hover .report-desc,
-    .report-cb:checked + .report-lbl .report-desc {
+    .report-btn.selected .report-desc {
       color: #2A1800 !important;
       -webkit-text-fill-color: #2A1800 !important;
     }
@@ -262,33 +259,29 @@
       <div class="field-label" style="margin-bottom:12px">Select Statements <span class="req">*</span></div>
 
       <div class="report-grid">
-        <input class="report-cb" type="checkbox" id="r-income" value="income_statement" checked />
-        <label class="report-lbl" for="r-income">
+        <div class="report-btn selected" data-value="income_statement" onclick="toggleReport(this)">
           <div class="report-emoji">📈</div>
           <span class="report-name">Income Statement</span>
           <span class="report-desc">Revenue · Profit · Margins</span>
-        </label>
+        </div>
 
-        <input class="report-cb" type="checkbox" id="r-balance" value="balance_sheet" checked />
-        <label class="report-lbl" for="r-balance">
+        <div class="report-btn selected" data-value="balance_sheet" onclick="toggleReport(this)">
           <div class="report-emoji">⚖️</div>
           <span class="report-name">Balance Sheet</span>
           <span class="report-desc">Assets · Liabilities · Equity</span>
-        </label>
+        </div>
 
-        <input class="report-cb" type="checkbox" id="r-cashflow" value="cash_flow" checked />
-        <label class="report-lbl" for="r-cashflow">
+        <div class="report-btn selected" data-value="cash_flow" onclick="toggleReport(this)">
           <div class="report-emoji">💵</div>
           <span class="report-name">Cash Flow</span>
           <span class="report-desc">Operating · Investing · Financing</span>
-        </label>
+        </div>
 
-        <input class="report-cb" type="checkbox" id="r-ai" value="ai_report" checked />
-        <label class="report-lbl" for="r-ai">
+        <div class="report-btn selected" data-value="ai_report" onclick="toggleReport(this)">
           <div class="report-emoji">🤖</div>
           <span class="report-name">AI Report</span>
           <span class="report-desc">Cross-statement AI analysis</span>
-        </label>
+        </div>
       </div>
 
       <button class="submit-btn" onclick="handleSubmit()">
@@ -328,13 +321,16 @@
     }
     updateTimeframe();
 
+    function toggleReport(el) {
+      el.classList.toggle('selected');
+    }
+
     function handleSubmit() {
       const company = document.getElementById('company').value.trim();
       const filing = document.getElementById('filing-type').value;
       const timeframe = document.getElementById('timeframe').value;
-      const reports = ['r-income','r-balance','r-cashflow','r-ai']
-        .filter(id => document.getElementById(id).checked)
-        .map(id => document.getElementById(id).value);
+      const reports = Array.from(document.querySelectorAll('.report-btn.selected'))
+        .map(el => el.getAttribute('data-value'));
 
       if (!company) { showStatus('Please enter a company name.', 'error'); return; }
       if (reports.length === 0) { showStatus('Please select at least one statement.', 'error'); return; }
