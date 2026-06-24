@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -338,14 +338,19 @@
       showStatus('Analysis started for ' + company + ' (' + filing + ' · ' + timeframe + '). Results will be ready in your Google Sheet shortly!', 'success');
 
       const webhookUrl = 'https://rocky51502.n8n-wsk.com/webhook/sec-filing-analysis';
+      const formData = new FormData();
+      formData.append('company', company);
+      formData.append('filing_type', filing);
+      formData.append('timeframe', timeframe);
+      formData.append('reports', JSON.stringify(reports));
+
       fetch(webhookUrl, {
         method: 'POST',
         mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company, filing_type: filing, timeframe, reports })
+        body: formData
       })
       .catch(() => {
-        // no-cors mode silences CORS errors — request still reaches n8n
+        // silence — no-cors won't return readable response
       });
     }
 
