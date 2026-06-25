@@ -164,6 +164,7 @@
       text-shadow: 0 1px 4px rgba(0,0,0,0.5);
     }
 
+    /* ── Submit button states ── */
     .submit-btn {
       width: 100%; padding: 16px;
       background: #2C7BE5;
@@ -176,15 +177,38 @@
       letter-spacing: 0.01em;
       box-shadow: 0 2px 16px rgba(44,123,229,0.35);
     }
-    .submit-btn:hover {
+    .submit-btn:hover:not(:disabled) {
       background: #1A6BD4;
       box-shadow: 0 4px 24px rgba(44,123,229,0.5);
     }
-    .submit-btn:active { transform: scale(0.99); }
+    .submit-btn:active:not(:disabled) { transform: scale(0.99); }
+
+    .submit-btn.sending {
+      background: #C9A84C;
+      box-shadow: 0 2px 16px rgba(201,168,76,0.45);
+      cursor: default;
+    }
+    .submit-btn.sent {
+      background: #1A7A3C;
+      box-shadow: 0 2px 16px rgba(26,122,60,0.45);
+      cursor: default;
+    }
+
+    /* spinner */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     .status { display: none; margin-top: 1rem; padding: 11px 14px; border-radius: 8px; font-size: 13px; text-align: center; }
     .status.success { background: #0D2318; border: 1px solid #1A4A2E; color: #5CCE8A; }
-    .status.error { background: #1F0D0D; border: 1px solid #4A1E1E; color: #E07070; }
+    .status.error   { background: #1F0D0D; border: 1px solid #4A1E1E; color: #E07070; }
+    .status.sending { background: #1A1500; border: 1px solid #3A2E00; color: #C9A84C; }
 
     .footer-pills {
       display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 16px;
@@ -284,8 +308,9 @@
         </div>
       </div>
 
-      <button class="submit-btn" onclick="handleSubmit()">
-        Analyze Filing Statements &nbsp;→
+      <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">
+        <span id="btnText">Analyze Filing Statements &nbsp;→</span>
+        <div class="spinner" id="spinner"></div>
       </button>
       <div class="status" id="status"></div>
     </div>
@@ -325,38 +350,82 @@
       el.classList.toggle('selected');
     }
 
-    function handleSubmit() {
-      const company = document.getElementById('company').value.trim();
-      const filing = document.getElementById('filing-type').value;
+    function setButtonState(state, company, filing, timeframe) {
+      const btn = document.getElementById('submitBtn');
+      const txt = document.getElementById('btnText');
+      const spinner = document.getElementById('spinner');
+
+      if (state === 'sending') {
+        btn.className = 'submit-btn sending';
+        btn.disabled = true;
+        txt.textContent = 'Sending request…';
+        spinner.style.display = 'block';
+        showStatus('⏳ Connecting to SEC EDGAR — this takes 30–60 seconds…', 'sending');
+
+      } else if (state === 'sent') {
+        btn.className = 'submit-btn sent';
+        btn.disabled = false;        // re-enable so they can click again
+        spinner.style.display = 'none';
+        txt.textContent = '✓ Sent! Click to run again →';
+        showStatus(
+          '✅ Analysis started for ' + company + ' (' + filing + ' · ' + timeframe + '). ' +
+          'Results will appear in your Google Sheet in ~1–2 minutes.',
+          'success'
+        );
+
+      } else if (state === 'error') {
+        btn.className = 'submit-btn';
+        btn.disabled = false;
+        spinner.style.display = 'none';
+        txt.textContent = 'Analyze Filing Statements \u00a0→';
+        showStatus('⚠️ Could not reach server. Please try again.', 'error');
+
+      } else {
+        // idle
+        btn.className = 'submit-btn';
+        btn.disabled = false;
+        spinner.style.display = 'none';
+        txt.textContent = 'Analyze Filing Statements \u00a0→';
+      }
+    }
+
+    async function handleSubmit() {
+      const company   = document.getElementById('company').value.trim();
+      const filing    = document.getElementById('filing-type').value;
       const timeframe = document.getElementById('timeframe').value;
-      const reports = Array.from(document.querySelectorAll('.report-btn.selected'))
-        .map(el => el.getAttribute('data-value'));
+      const reports   = Array.from(document.querySelectorAll('.report-btn.selected'))
+                          .map(el => el.getAttribute('data-value'));
 
-      if (!company) { showStatus('Please enter a company name.', 'error'); return; }
-      if (reports.length === 0) { showStatus('Please select at least one statement.', 'error'); return; }
+      if (!company) { showStatus('⚠️ Please enter a company name.', 'error'); return; }
+      if (reports.length === 0) { showStatus('⚠️ Please select at least one statement.', 'error'); return; }
 
-      showStatus('Analysis started for ' + company + ' (' + filing + ' · ' + timeframe + '). Results will be ready in your Google Sheet shortly!', 'success');
+      setButtonState('sending', company, filing, timeframe);
 
       const webhookUrl = 'https://rocky51502.n8n-wsk.com/webhook/sec-filing-analysis';
       const formData = new FormData();
-      formData.append('company', company);
+      formData.append('company',     company);
       formData.append('filing_type', filing);
-      formData.append('timeframe', timeframe);
-      formData.append('reports', JSON.stringify(reports));
+      formData.append('timeframe',   timeframe);
+      formData.append('reports',     JSON.stringify(reports));
 
-      fetch(webhookUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: formData
-      })
-      .catch(() => {
-        // silence — no-cors won't return readable response
-      });
+      try {
+        await fetch(webhookUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: formData
+        });
+        // no-cors always "succeeds" — treat as sent
+        setButtonState('sent', company, filing, timeframe);
+      } catch (err) {
+        setButtonState('error');
+      }
     }
 
     function showStatus(msg, type) {
       const el = document.getElementById('status');
-      el.textContent = msg; el.className = 'status ' + type; el.style.display = 'block';
+      el.textContent = msg;
+      el.className = 'status ' + type;
+      el.style.display = 'block';
     }
   </script>
 </body>
