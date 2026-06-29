@@ -99,77 +99,101 @@
     .divider-line { height: 1px; background: #1E2D45; margin: 1.5rem 0; }
     .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 30px; }
 
-    @keyframes navyFlow {
-      0%   { background-position: 0% 50%; }
-      100% { background-position: 300% 50%; }
-    }
     @keyframes goldFlow {
       0%   { background-position: 0% 50%; }
       100% { background-position: 300% 50%; }
     }
 
+    /* DEFAULT state — gold, beautiful, unselected */
     .report-btn {
+      position: relative;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 10px; padding: 22px 12px;
-      background: linear-gradient(105deg, #1A2438, #243555, #1E3060, #16202F, #2A3F60, #1A2438, #243555, #1E3060, #16202F);
+      background: linear-gradient(105deg, #9A7010, #C9A84C, #F0D878, #E8C84A, #C9A030, #B8890E, #F0D060, #C9A84C, #9A7010);
       background-size: 400% 100%;
-      animation: navyFlow 14s linear infinite;
-      border: 1px solid #2A3A52;
+      animation: goldFlow 10s linear infinite;
+      border: 1px solid #C9A84C;
       border-radius: 12px; cursor: pointer;
-      transition: border-color 0.4s;
+      transition: all 0.3s;
       text-align: center;
       user-select: none;
     }
 
+    .report-btn .report-name {
+      font-size: 14px !important;
+      font-weight: 900 !important;
+      color: #1A0E00 !important;
+      -webkit-text-fill-color: #1A0E00 !important;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-shadow: none;
+      background: none !important;
+      -webkit-background-clip: unset !important;
+      background-clip: unset !important;
+    }
+
+    .report-btn .report-desc {
+      font-size: 11px !important;
+      font-weight: 700 !important;
+      color: #2A1800 !important;
+      -webkit-text-fill-color: #2A1800 !important;
+      background: none !important;
+      -webkit-background-clip: unset !important;
+      background-clip: unset !important;
+    }
+
+    /* Checkmark badge — hidden by default */
+    .report-btn .check-badge {
+      position: absolute;
+      top: 10px; right: 10px;
+      width: 22px; height: 22px;
+      background: #1A2438;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+      font-size: 13px;
+      color: #4ECDC4;
+      font-weight: 900;
+    }
+
+    /* SELECTED state — navy with gold border glow */
     .report-btn.selected {
-      background: linear-gradient(105deg, #9A7010, #C9A84C, #F0D878, #E8C84A, #C9A030, #B8890E, #F0D060, #C9A84C, #9A7010);
+      background: linear-gradient(105deg, #1A2438, #243555, #1E3060, #16202F, #2A3F60, #1A2438);
       background-size: 400% 100%;
-      animation: goldFlow 10s linear infinite;
-      border-color: #C9A84C;
+      animation: none;
+      border: 2px solid #C9A84C;
+      box-shadow: 0 0 12px rgba(201,168,76,0.4), inset 0 0 20px rgba(201,168,76,0.05);
     }
 
     .report-btn.selected .report-name {
-      color: #1A0E00 !important;
-      -webkit-text-fill-color: #1A0E00 !important;
-      text-shadow: none !important;
+      color: #C9A84C !important;
+      -webkit-text-fill-color: #C9A84C !important;
+      text-shadow: 0 0 8px rgba(201,168,76,0.4);
     }
+
     .report-btn.selected .report-desc {
-      color: #2A1800 !important;
-      -webkit-text-fill-color: #2A1800 !important;
+      color: #8AAACF !important;
+      -webkit-text-fill-color: #8AAACF !important;
+    }
+
+    .report-btn.selected .check-badge {
+      opacity: 1;
     }
 
     .report-emoji { font-size: 32px; line-height: 1; }
 
-    .report-name {
-      font-size: 14px !important;
-      font-weight: 900 !important;
-      color: #ffffff !important;
-      -webkit-text-fill-color: #ffffff !important;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      text-shadow: 0 1px 6px rgba(0,0,0,0.6);
-      background: none !important;
-      -webkit-background-clip: unset !important;
-      background-clip: unset !important;
+    /* hint text */
+    .select-hint {
+      font-size: 11px; color: #6A7E9A; text-align: center;
+      margin-bottom: 14px; letter-spacing: 0.05em;
     }
 
-    .report-desc {
-      font-size: 11px !important;
-      font-weight: 700 !important;
-      color: #ffffff !important;
-      -webkit-text-fill-color: #ffffff !important;
-      background: none !important;
-      -webkit-background-clip: unset !important;
-      background-clip: unset !important;
-      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
-    }
-
-    /* ── Submit button states ── */
+    /* Submit button */
     .submit-btn {
       width: 100%; padding: 16px;
       background: #2C7BE5;
-      border: none;
-      border-radius: 12px;
+      border: none; border-radius: 12px;
       font-size: 18px; font-weight: 700; color: #ffffff;
       cursor: pointer; font-family: Georgia, serif;
       display: flex; align-items: center; justify-content: center; gap: 12px;
@@ -177,24 +201,11 @@
       letter-spacing: 0.01em;
       box-shadow: 0 2px 16px rgba(44,123,229,0.35);
     }
-    .submit-btn:hover:not(:disabled) {
-      background: #1A6BD4;
-      box-shadow: 0 4px 24px rgba(44,123,229,0.5);
-    }
+    .submit-btn:hover:not(:disabled) { background: #1A6BD4; box-shadow: 0 4px 24px rgba(44,123,229,0.5); }
     .submit-btn:active:not(:disabled) { transform: scale(0.99); }
+    .submit-btn.sending { background: #C9A84C; box-shadow: 0 2px 16px rgba(201,168,76,0.45); cursor: default; }
+    .submit-btn.sent { background: #1A7A3C; box-shadow: 0 2px 16px rgba(26,122,60,0.45); cursor: default; }
 
-    .submit-btn.sending {
-      background: #C9A84C;
-      box-shadow: 0 2px 16px rgba(201,168,76,0.45);
-      cursor: default;
-    }
-    .submit-btn.sent {
-      background: #1A7A3C;
-      box-shadow: 0 2px 16px rgba(26,122,60,0.45);
-      cursor: default;
-    }
-
-    /* spinner */
     .spinner {
       width: 18px; height: 18px;
       border: 3px solid rgba(255,255,255,0.3);
@@ -280,28 +291,33 @@
       </div>
 
       <div class="divider-line"></div>
-      <div class="field-label" style="margin-bottom:12px">Select Statements <span class="req">*</span></div>
+      <div class="field-label" style="margin-bottom:6px">Select Statements <span class="req">*</span></div>
+      <div class="select-hint">Click to select · Gold glow = selected ✓</div>
 
       <div class="report-grid">
-        <div class="report-btn selected" data-value="income_statement" onclick="toggleReport(this)">
+        <div class="report-btn" data-value="income_statement" onclick="toggleReport(this)">
+          <div class="check-badge">✓</div>
           <div class="report-emoji">📈</div>
           <span class="report-name">Income Statement</span>
           <span class="report-desc">Revenue · Profit · Margins</span>
         </div>
 
-        <div class="report-btn selected" data-value="balance_sheet" onclick="toggleReport(this)">
+        <div class="report-btn" data-value="balance_sheet" onclick="toggleReport(this)">
+          <div class="check-badge">✓</div>
           <div class="report-emoji">⚖️</div>
           <span class="report-name">Balance Sheet</span>
           <span class="report-desc">Assets · Liabilities · Equity</span>
         </div>
 
-        <div class="report-btn selected" data-value="cash_flow" onclick="toggleReport(this)">
+        <div class="report-btn" data-value="cash_flow" onclick="toggleReport(this)">
+          <div class="check-badge">✓</div>
           <div class="report-emoji">💵</div>
           <span class="report-name">Cash Flow</span>
           <span class="report-desc">Operating · Investing · Financing</span>
         </div>
 
-        <div class="report-btn selected" data-value="ai_report" onclick="toggleReport(this)">
+        <div class="report-btn" data-value="ai_report" onclick="toggleReport(this)">
+          <div class="check-badge">✓</div>
           <div class="report-emoji">🤖</div>
           <span class="report-name">AI Report</span>
           <span class="report-desc">Cross-statement AI analysis</span>
@@ -361,10 +377,9 @@
         txt.textContent = 'Sending request…';
         spinner.style.display = 'block';
         showStatus('⏳ Connecting to SEC EDGAR — this takes 30–60 seconds…', 'sending');
-
       } else if (state === 'sent') {
         btn.className = 'submit-btn sent';
-        btn.disabled = false;        // re-enable so they can click again
+        btn.disabled = false;
         spinner.style.display = 'none';
         txt.textContent = '✓ Sent! Click to run again →';
         showStatus(
@@ -372,16 +387,13 @@
           'Results will appear in your Google Sheet in ~1–2 minutes.',
           'success'
         );
-
       } else if (state === 'error') {
         btn.className = 'submit-btn';
         btn.disabled = false;
         spinner.style.display = 'none';
         txt.textContent = 'Analyze Filing Statements \u00a0→';
         showStatus('⚠️ Could not reach server. Please try again.', 'error');
-
       } else {
-        // idle
         btn.className = 'submit-btn';
         btn.disabled = false;
         spinner.style.display = 'none';
@@ -409,12 +421,7 @@
       formData.append('reports',     JSON.stringify(reports));
 
       try {
-        await fetch(webhookUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: formData
-        });
-        // no-cors always "succeeds" — treat as sent
+        await fetch(webhookUrl, { method: 'POST', mode: 'no-cors', body: formData });
         setButtonState('sent', company, filing, timeframe);
       } catch (err) {
         setButtonState('error');
