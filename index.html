@@ -342,24 +342,24 @@
 
   <script>
     function updateTimeframe() {
-      const type = document.getElementById('filing-type').value;
-      const sel = document.getElementById('timeframe');
-      sel.innerHTML = '';
-      if (type === '10-K') {
-        ['Past 1 Year','Past 2 Years','Past 3 Years','Past 4 Years','Past 5 Years'].forEach((l, i) => {
-          const o = document.createElement('option');
-          o.value = (i+1)+'Y'; o.textContent = l; sel.appendChild(o);
-        });
-        sel.value = '3Y';
-      } else {
-        for (let q = 1; q <= 20; q++) {
-          const o = document.createElement('option');
-          o.value = q+'Q'; o.textContent = 'Past ' + q + ' Quarter' + (q > 1 ? 's' : '');
-          sel.appendChild(o);
-        }
-        sel.value = '4Q';
-      }
+  const type = document.getElementById('filing-type').value;
+  const sel = document.getElementById('timeframe');
+  sel.innerHTML = '';
+  if (type === '10-K') {
+    ['Past 1 Year','Past 2 Years','Past 3 Years','Past 4 Years','Past 5 Years'].forEach((l, i) => {
+      const o = document.createElement('option');
+      o.value = (i+1)+'Y'; o.textContent = l; sel.appendChild(o);
+    });
+    sel.value = '3Y';
+  } else {
+    for (let q = 1; q <= 8; q++) {
+      const o = document.createElement('option');
+      o.value = q+'Q'; o.textContent = 'Past ' + q + ' Quarter' + (q > 1 ? 's' : '');
+      sel.appendChild(o);
     }
+    sel.value = '4Q';
+  }
+}
     updateTimeframe();
 
     function toggleReport(el) {
