@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cross-Statement Comparison Report</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --navy-950:#0a121f;
+    --navy-900:#0f1b2d;
+    --navy-800:#16253b;
+    --navy-700:#1e3049;
+    --gold:#d4af37;
+    --gold-soft:#e8c766;
+    --text-hi:#f4f1e8;
+    --text-mid:#b9c2d0;
+    --text-low:#7c8aa0;
+    --green:#4caf7d;
+    --red:#e05656;
+    --border:#26374f;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:radial-gradient(1200px 600px at 10% -10%, #14243c 0%, var(--navy-950) 55%) fixed;
+    color:var(--text-hi);
+    font-family:'Georgia','Iowan Old Style',serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    padding:32px 16px 80px;
+  }
+  .wrap{max-width:1040px;margin:0 auto;}
+
+  /* ---------- header ---------- */
+  header{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:1px solid var(--border);
+    padding-bottom:20px;margin-bottom:28px;
+    flex-wrap:wrap;gap:12px;
+  }
+  .brand{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}
+  .brand h1{
+    font-family:'Trajan Pro','Cinzel',Georgia,serif;
+    letter-spacing:2px;
+    font-size:26px;margin:0;
+    color:var(--text-hi);
+    font-weight:400;
+  }
+  .brand .divider{color:var(--gold);opacity:.5;}
+  .brand .tag{
+    font-family:Georgia,serif;
+    color:var(--gold-soft);
+    font-size:13px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+  }
+  .meta{
+    font-family:-apple-system,Helvetica,Arial,sans-serif;
+    font-size:12.5px;color:var(--text-low);text-align:right;
+  }
+  .meta .exp{color:var(--gold-soft);}
+
+  /* ---------- stat cards ---------- */
+  .stat-row{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:14px;margin-bottom:28px;
+  }
+  .stat-card{
+    background:var(--navy-800);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:16px 18px;
+  }
+  .stat-card .label{
+    font-family:-apple-system,Helvetica,Arial,sans-serif;
+    font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;
+    color:var(--text-low);margin-bottom:8px;
+  }
+  .stat-card .value{
+    font-size:24px;font-weight:600;font-family:Georgia,serif;color:var(--text-hi);
+  }
+  .stat-card .sub{
+    font-family:-apple-system,Helvetica,Arial,sans-serif;
+    font-size:12px;color:var(--text-mid);margin-top:4px;
+  }
+  .stat-card .sub.pos{color:var(--green);}
+  .stat-card .sub.neg{color:var(--red);}
+
+  /* ---------- section ---------- */
+  .section{margin-bottom:34px;}
+  .section-head{
+    display:flex;align-items:center;gap:12px;margin-bottom:14px;
+  }
+  .section-head .num{
+    font-family:Georgia,serif;color:var(--gold);font-size:13px;
+    border:1px solid var(--gold);border-radius:50%;
+    width:22px;height:22px;display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .section-head h2{
+    font-family:Georgia,serif;font-weight:400;font-size:17px;
+    letter-spacing:.5px;margin:0;color:var(--text-hi);
+  }
+  .section-head .desc{
+    font-family:-apple-system,Helvetica,Arial,sans-serif;
+    font-size:12px;color:var(--text-low);margin-left:4px;
+  }
+
+  .chart-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:16px;
+  }
+  @media (max-width:720px){.chart-grid{grid-template-columns:1fr;}}
+
+  .chart-card{
+    background:var(--navy-800);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:18px 20px 8px;
+  }
+  .chart-card h3{
+    font-family:-apple-system,Helvetica,Arial,sans-serif;
+    font-size:13px;font-weight:600;color:var(--text-hi);margin:0 0 2px;
+  }
+  .chart-card .cap{
+    font-family:-apple-system,Helvetica,Arial,sans-serif;
+    font-size:11px;color:var(--text-low);margin-bottom:10px;
+  }
+  .chart-card canvas{max-height:230px;}
+
+  /* ---------- AI conclusions ---------- */
+  .ai-grid{display:flex;flex-direction:column;gap:12px;}
+  .ai-card{
+    background:linear-gradient(135deg, var(--navy-800) 0%, var(--navy-700) 100%);
+    border:1px solid var(--border);
+    border-left:3px solid var(--gold);
+    border-radius:6px;
+    padding:18px 20px;
+  }
+  .ai-card .ai-head{
+    display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;
+  }
+  .ai-card .ai-head .co{
+    font-family:Georgia,serif;font-size:15px;color:var(--gold-soft);
+  }
+  .ai-card .ai-head .ticker{
+    font-family:-apple-system,Helvetica,Arial,sans-serif;
+    font-size:11px;color:var(--text-low);letter-spacing:1px;
+  }
+  .ai-card p{
+    font-family:-apple-system,Helvetica,Arial,sans-serif;
+    font-size:13.5px;line-height:1.65;color:var(--text-mid);margin:0;
+  }
+
+  /* ---------- legend / company chips ---------- */
+  .company-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px;}
+  .chip{
+    font-family:-apple-system,Helvetica,Arial,sans-serif;
+    font-size:12px;padding:5px 12px;border-radius:20px;
+    border:1px solid var(--border);color:var(--text-mid);
+    display:flex;align-items:center;gap:6px;
+  }
+  .chip .dot{width:8px;height:8px;border-radius:50%;}
+
+  /* ---------- states ---------- */
+  .state-box{
+    text-align:center;padding:80px 20px;color:var(--text-low);
+    font-family:-apple-system,Helvetica,Arial,sans-serif;
+  }
+  .state-box h2{color:var(--text-hi);font-family:Georgia,serif;font-weight:400;margin-bottom:8px;}
+
+  footer{
+    text-align:center;margin-top:40px;padding-top:20px;
+    border-top:1px solid var(--border);
+    font-family:-apple-system,Helvetica,Arial,sans-serif;
+    font-size:11.5px;color:var(--text-low);
+  }
+  footer a{color:var(--gold-soft);text-decoration:none;}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app">
+  <div class="state-box" id="loading">
+    <h2>Loading comparison report&hellip;</h2>
+    <div>Pulling official SEC filing data for your selected companies.</div>
+  </div>
+</div>
+
+<script>
+// ---- CONFIG ----
+// Point this at your n8n webhook that serves comparison report data by token.
+const WEBHOOK_URL = "https://rocky51502.n8n-wsk.com/webhook/comparison-report";
+
+const COLORS = ["#d4af37", "#5b9bd5", "#7cc47f", "#e0806b", "#b48ee0", "#e0c34f"];
+
+function fmtB(val){
+  if (typeof val !== 'number' || isNaN(val)) return 'N/A';
+  const sign = val < 0 ? '-' : '';
+  const abs = Math.abs(val);
+  if (abs >= 1e9) return sign + '$' + (abs/1e9).toFixed(2) + 'B';
+  if (abs >= 1e6) return sign + '$' + (abs/1e6).toFixed(2) + 'M';
+  return sign + '$' + abs.toLocaleString();
+}
+
+function pctChange(latest, prior){
+  if (typeof latest !== 'number' || typeof prior !== 'number' || !prior) return null;
+  return ((latest - prior) / Math.abs(prior)) * 100;
+}
+
+function latestPeriod(company){
+  return company.periods[company.periods.length - 1] || {};
+}
+function priorPeriod(company){
+  return company.periods[company.periods.length - 2] || {};
+}
+
+async function init(){
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  const app = document.getElementById('app');
+
+  if (!token){
+    app.innerHTML = stateBox("No comparison token provided", "Add companies from the SEC Filing Analyzer form, then open the comparison link it gives you.");
+    return;
+  }
+
+  let data;
+  try{
+    const res = await fetch(`${WEBHOOK_URL}?token=${encodeURIComponent(token)}`);
+    data = await res.json();
+  }catch(e){
+    app.innerHTML = stateBox("Couldn't load this report", "The comparison link may have expired or the server is unreachable.");
+    return;
+  }
+
+  if (data.error || !data.companies || data.companies.length === 0){
+    app.innerHTML = stateBox("Report not found or expired", data.message || "Comparison links are valid for 7 days after the last company was added.");
+    return;
+  }
+
+  render(data);
+}
+
+function stateBox(title, sub){
+  return `<div class="state-box"><h2>${title}</h2><div>${sub}</div></div>`;
+}
+
+function render(data){
+  const companies = data.companies;
+  const app = document.getElementById('app');
+
+  // ---- header stats ----
+  let bestGrowth = null, bestGrowthCo = null;
+  companies.forEach(c=>{
+    const lp = latestPeriod(c), pp = priorPeriod(c);
+    const g = pctChange(lp.revenue, pp.revenue);
+    if (g !== null && (bestGrowth === null || g > bestGrowth)){ bestGrowth = g; bestGrowthCo = c; }
+  });
+
+  const generated = data.generated_at ? new Date(data.generated_at) : new Date();
+  const expires = data.expires_at ? new Date(data.expires_at) : null;
+
+  app.innerHTML = `
+    <header>
+      <div class="brand">
+        <h1>Cross-Statement Comparison</h1>
+        <span class="divider">&mdash;</span>
+        <span class="tag">SEC Filing Analyzer</span>
+      </div>
+      <div class="meta">
+        Generated ${generated.toLocaleDateString()}<br>
+        ${expires ? `<span class="exp">Link expires ${expires.toLocaleDateString()}</span>` : ''}
+      </div>
+    </header>
+
+    <div class="company-chips">
+      ${companies.map((c,i)=>`<span class="chip"><span class="dot" style="background:${COLORS[i % COLORS.length]}"></span>${c.ticker} &middot; ${c.companyName || ''}</span>`).join('')}
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="label">Companies Compared</div>
+        <div class="value">${companies.length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Fastest Revenue Growth</div>
+        <div class="value">${bestGrowthCo ? bestGrowthCo.ticker : '&mdash;'}</div>
+        <div class="sub ${bestGrowth>=0?'pos':'neg'}">${bestGrowth!==null ? (bestGrowth>=0?'+':'')+bestGrowth.toFixed(1)+'% QoQ' : 'N/A'}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Filing Type</div>
+        <div class="value" style="font-size:20px;">${companies[0].filingType || '10-Q'}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Periods Tracked</div>
+        <div class="value">${Math.max(...companies.map(c=>c.periods.length))}</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <span class="num">1</span>
+        <h2>Income Statement Comparison</h2>
+        <span class="desc">Revenue trend &amp; latest-quarter margins</span>
+      </div>
+      <div class="chart-grid">
+        <div class="chart-card">
+          <h3>Revenue Trend</h3>
+          <div class="cap">Quarterly revenue across all periods tracked</div>
+          <canvas id="revenueTrend"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Net Income Trend</h3>
+          <div class="cap">Bottom-line profit across all periods tracked</div>
+          <canvas id="netIncomeTrend"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Margins (Latest Period)</h3>
+          <div class="cap">Gross &amp; operating margin, most recent quarter</div>
+          <canvas id="marginsChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>EPS Comparison</h3>
+          <div class="cap">Diluted/basic earnings per share, latest quarter</div>
+          <canvas id="epsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <span class="num">2</span>
+        <h2>Balance Sheet Comparison</h2>
+        <span class="desc">Financial position, most recent quarter</span>
+      </div>
+      <div class="chart-grid">
+        <div class="chart-card">
+          <h3>Assets vs. Debt vs. Equity</h3>
+          <div class="cap">Latest reported balance sheet totals</div>
+          <canvas id="balanceSheetChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Cash Position</h3>
+          <div class="cap">Cash &amp; equivalents on hand, latest quarter</div>
+          <canvas id="cashChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <span class="num">3</span>
+        <h2>Cash Flow Comparison</h2>
+        <span class="desc">Where the cash actually came from and went</span>
+      </div>
+      <div class="chart-grid">
+        <div class="chart-card">
+          <h3>Operating vs. Free Cash Flow</h3>
+          <div class="cap">Latest quarter, side by side</div>
+          <canvas id="cashFlowChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Free Cash Flow Trend</h3>
+          <div class="cap">Across all periods tracked</div>
+          <canvas id="fcfTrend"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <span class="num">4</span>
+        <h2>Analyst View</h2>
+        <span class="desc">Plain-language takeaway for each company</span>
+      </div>
+      <div class="ai-grid">
+        ${companies.map((c,i)=>`
+          <div class="ai-card" style="border-left-color:${COLORS[i % COLORS.length]}">
+            <div class="ai-head">
+              <span class="co">${c.companyName || c.ticker}</span>
+              <span class="ticker">${c.ticker}</span>
+            </div>
+            <p>${(c.ai_analysis || 'No analysis available for this company yet.').replace(/^\{.*"analysis"\s*:\s*"/,'').replace(/"\}\s*$/,'')}</p>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <footer>
+      Report generated by SEC Filing Analyzer &middot; Data sourced from official SEC EDGAR filings &middot;
+      ${expires ? `Link expires ${expires.toLocaleDateString()}` : ''}
+    </footer>
+  `;
+
+  drawCharts(companies);
+}
+
+function baseOpts(extra={}){
+  return Object.assign({
+    responsive:true,
+    maintainAspectRatio:false,
+    plugins:{
+      legend:{ labels:{ color:'#b9c2d0', font:{family:"-apple-system,Helvetica,Arial,sans-serif", size:11} } }
+    },
+    scales:{
+      x:{ ticks:{color:'#7c8aa0', font:{size:10.5}}, grid:{color:'#1e3049'} },
+      y:{ ticks:{color:'#7c8aa0', font:{size:10.5}}, grid:{color:'#1e3049'} }
+    }
+  }, extra);
+}
+
+function drawCharts(companies){
+  const allPeriods = Array.from(new Set(companies.flatMap(c=>c.periods.map(p=>p.period)))).sort();
+
+  // Revenue trend
+  new Chart(document.getElementById('revenueTrend'), {
+    type:'line',
+    data:{
+      labels:allPeriods,
+      datasets:companies.map((c,i)=>({
+        label:c.ticker,
+        data:allPeriods.map(p=>{
+          const row = c.periods.find(x=>x.period===p);
+          return row ? row.revenue/1e9 : null;
+        }),
+        borderColor:COLORS[i%COLORS.length],
+        backgroundColor:COLORS[i%COLORS.length]+'33',
+        tension:.3, spanGaps:true
+      }))
+    },
+    options: baseOpts({ scales:{
+      x:{ ticks:{color:'#7c8aa0', font:{size:9}}, grid:{color:'#1e3049'} },
+      y:{ ticks:{color:'#7c8aa0', callback:v=>'$'+v+'B'}, grid:{color:'#1e3049'} }
+    }})
+  });
+
+  // Net income trend
+  new Chart(document.getElementById('netIncomeTrend'), {
+    type:'line',
+    data:{
+      labels:allPeriods,
+      datasets:companies.map((c,i)=>({
+        label:c.ticker,
+        data:allPeriods.map(p=>{
+          const row = c.periods.find(x=>x.period===p);
+          return row ? row.net_income/1e9 : null;
+        }),
+        borderColor:COLORS[i%COLORS.length],
+        backgroundColor:COLORS[i%COLORS.length]+'33',
+        tension:.3, spanGaps:true
+      }))
+    },
+    options: baseOpts({ scales:{
+      x:{ ticks:{color:'#7c8aa0', font:{size:9}}, grid:{color:'#1e3049'} },
+      y:{ ticks:{color:'#7c8aa0', callback:v=>'$'+v+'B'}, grid:{color:'#1e3049'} }
+    }})
+  });
+
+  // Margins (latest)
+  new Chart(document.getElementById('marginsChart'), {
+    type:'bar',
+    data:{
+      labels:companies.map(c=>c.ticker),
+      datasets:[
+        {
+          label:'Gross Margin %',
+          data:companies.map(c=>{ const lp=latestPeriod(c); return lp.revenue ? (lp.gross_profit/lp.revenue*100).toFixed(1) : 0; }),
+          backgroundColor:'#d4af37'
+        },
+        {
+          label:'Operating Margin %',
+          data:companies.map(c=>{ const lp=latestPeriod(c); return lp.revenue ? (lp.operating_income/lp.revenue*100).toFixed(1) : 0; }),
+          backgroundColor:'#5b9bd5'
+        }
+      ]
+    },
+    options: baseOpts({ scales:{
+      x:{ ticks:{color:'#7c8aa0'}, grid:{color:'#1e3049'} },
+      y:{ ticks:{color:'#7c8aa0', callback:v=>v+'%'}, grid:{color:'#1e3049'} }
+    }})
+  });
+
+  // EPS
+  new Chart(document.getElementById('epsChart'), {
+    type:'bar',
+    data:{
+      labels:companies.map(c=>c.ticker),
+      datasets:[{
+        label:'EPS',
+        data:companies.map(c=>{ const lp=latestPeriod(c); return lp.eps || 0; }),
+        backgroundColor:companies.map((c,i)=>COLORS[i%COLORS.length])
+      }]
+    },
+    options: baseOpts({ plugins:{legend:{display:false}} })
+  });
+
+  // Balance sheet
+  new Chart(document.getElementById('balanceSheetChart'), {
+    type:'bar',
+    data:{
+      labels:companies.map(c=>c.ticker),
+      datasets:[
+        { label:'Total Assets', data:companies.map(c=>{const lp=latestPeriod(c); return lp.total_assets ? lp.total_assets/1e9 : 0;}), backgroundColor:'#d4af37' },
+        { label:'Total Debt', data:companies.map(c=>{const lp=latestPeriod(c); return lp.total_debt ? lp.total_debt/1e9 : 0;}), backgroundColor:'#e0806b' },
+        { label:'Total Equity', data:companies.map(c=>{const lp=latestPeriod(c); return lp.total_equity ? lp.total_equity/1e9 : 0;}), backgroundColor:'#7cc47f' }
+      ]
+    },
+    options: baseOpts({ scales:{
+      x:{ ticks:{color:'#7c8aa0'}, grid:{color:'#1e3049'} },
+      y:{ ticks:{color:'#7c8aa0', callback:v=>'$'+v+'B'}, grid:{color:'#1e3049'} }
+    }})
+  });
+
+  // Cash position
+  new Chart(document.getElementById('cashChart'), {
+    type:'bar',
+    data:{
+      labels:companies.map(c=>c.ticker),
+      datasets:[{
+        label:'Cash & Equivalents',
+        data:companies.map(c=>{const lp=latestPeriod(c); return lp.cash_and_equivalents ? lp.cash_and_equivalents/1e9 : 0;}),
+        backgroundColor:companies.map((c,i)=>COLORS[i%COLORS.length])
+      }]
+    },
+    options: baseOpts({ plugins:{legend:{display:false}}, scales:{
+      x:{ ticks:{color:'#7c8aa0'}, grid:{color:'#1e3049'} },
+      y:{ ticks:{color:'#7c8aa0', callback:v=>'$'+v+'B'}, grid:{color:'#1e3049'} }
+    }})
+  });
+
+  // Op vs Free cash flow
+  new Chart(document.getElementById('cashFlowChart'), {
+    type:'bar',
+    data:{
+      labels:companies.map(c=>c.ticker),
+      datasets:[
+        { label:'Operating CF', data:companies.map(c=>{const lp=latestPeriod(c); return lp.operating_cash_flow ? lp.operating_cash_flow/1e9 : 0;}), backgroundColor:'#5b9bd5' },
+        { label:'Free CF', data:companies.map(c=>{const lp=latestPeriod(c); return lp.free_cash_flow ? lp.free_cash_flow/1e9 : 0;}), backgroundColor:'#d4af37' }
+      ]
+    },
+    options: baseOpts({ scales:{
+      x:{ ticks:{color:'#7c8aa0'}, grid:{color:'#1e3049'} },
+      y:{ ticks:{color:'#7c8aa0', callback:v=>'$'+v+'B'}, grid:{color:'#1e3049'} }
+    }})
+  });
+
+  // FCF trend
+  new Chart(document.getElementById('fcfTrend'), {
+    type:'line',
+    data:{
+      labels:allPeriods,
+      datasets:companies.map((c,i)=>({
+        label:c.ticker,
+        data:allPeriods.map(p=>{
+          const row = c.periods.find(x=>x.period===p);
+          return row ? row.free_cash_flow/1e9 : null;
+        }),
+        borderColor:COLORS[i%COLORS.length],
+        backgroundColor:COLORS[i%COLORS.length]+'33',
+        tension:.3, spanGaps:true
+      }))
+    },
+    options: baseOpts({ scales:{
+      x:{ ticks:{color:'#7c8aa0', font:{size:9}}, grid:{color:'#1e3049'} },
+      y:{ ticks:{color:'#7c8aa0', callback:v=>'$'+v+'B'}, grid:{color:'#1e3049'} }
+    }})
+  });
+}
+
+init();
+</script>
+
+</body>
+</html>
