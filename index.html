@@ -341,22 +341,10 @@
   </div>
 
   <script>
-    // ---- Comparison token setup ----
-    let compareToken = localStorage.getItem('compareToken');
-    let compareCount = parseInt(localStorage.getItem('compareCount') || '0');
-    if (!compareToken) {
-      compareToken = crypto.randomUUID();
-      localStorage.setItem('compareToken', compareToken);
-    }
+    let compareToken; // generated fresh on every submission now — see handleSubmit()
 
     function getReportUrl() {
       return `https://tigergrain.github.io/Stock_Pro_Analysis/comparison-report.html?token=${compareToken}`;
-    }
-
-    function startNewComparison() {
-      localStorage.removeItem('compareToken');
-      localStorage.removeItem('compareCount');
-      location.reload();
     }
 
     function updateTimeframe() {
@@ -401,15 +389,10 @@
         spinner.style.display = 'none';
         txt.textContent = '✓ Sent! Click to run again →';
 
-        compareCount++;
-        localStorage.setItem('compareCount', compareCount);
-
         showStatus(
           '✅ Analysis started for ' + company + ' (' + filing + ' · ' + timeframe + '). ' +
           'Results will appear in your Google Sheet in ~1–2 minutes.<br><br>' +
-          '📊 Added to comparison (' + compareCount + ' compan' + (compareCount === 1 ? 'y' : 'ies') + ' so far) — ' +
-          '<a href="' + getReportUrl() + '" target="_blank" style="color:#4ECDC4;text-decoration:underline;">View comparison report</a> &nbsp;|&nbsp; ' +
-          '<a href="#" onclick="startNewComparison(); return false;" style="color:#E07070;text-decoration:underline;">Start New Comparison</a>',
+          '📊 <a href="' + getReportUrl() + '" target="_blank" style="color:#4ECDC4;text-decoration:underline;">View report</a>',
           'success'
         );
       } else if (state === 'error') {
@@ -435,6 +418,8 @@
 
       if (!company) { showStatus('⚠️ Please enter a company name.', 'error'); return; }
       if (reports.length === 0) { showStatus('⚠️ Please select at least one statement.', 'error'); return; }
+
+      compareToken = crypto.randomUUID();
 
       setButtonState('sending', company, filing, timeframe);
 
